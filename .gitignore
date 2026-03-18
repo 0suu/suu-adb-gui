@@ -1,0 +1,3 @@
+# Tauri updater signing keys - never commit private keys
+updater.key
+updater.key.pub

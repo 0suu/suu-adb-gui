@@ -1,0 +1,1056 @@
+/* レイアウト */
+.app-layout {
+  display: flex;
+  height: 100vh;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  color: #e0e0e0;
+  background: #1e1e1e;
+  overflow: hidden;
+}
+
+.app-layout.is-resizing {
+  cursor: col-resize;
+}
+
+/* サイドバー */
+.sidebar {
+  flex: 0 0 auto;
+  min-width: 220px;
+  max-width: 52%;
+  background: #252526;
+  border-right: 1px solid #333;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.sidebar-device-area {
+  flex: 1;
+  overflow-y: auto;
+  padding: 12px;
+  min-height: 0;
+}
+
+.sidebar h3 {
+  margin: 0 0 12px;
+  font-size: 14px;
+  color: #888;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.sidebar-resizer {
+  width: 10px;
+  flex: 0 0 10px;
+  cursor: col-resize;
+  position: relative;
+  background: linear-gradient(180deg, #1a1a1a 0%, #202224 100%);
+}
+
+.sidebar-resizer::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 4px;
+  width: 2px;
+  background: #34383d;
+  transition: background 0.15s ease;
+}
+
+.sidebar-resizer:hover::before,
+.app-layout.is-resizing .sidebar-resizer::before,
+.sidebar-resizer:focus-visible::before {
+  background: #007acc;
+}
+
+.sidebar-resizer:focus-visible {
+  outline: none;
+}
+
+/* 接続パネル（サイドバー下部） */
+.connection-panel {
+  flex: 0 0 auto;
+  padding: 12px;
+  border-top: 1px solid #3a3a3a;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.connection-panel h3 {
+  margin: 0;
+  font-size: 11px;
+  color: #888;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.connection-panel-input-row {
+  display: flex;
+  gap: 6px;
+}
+
+.connection-panel-input-row .connection-panel-input {
+  flex: 1;
+  width: auto;
+}
+
+.connection-panel-input {
+  width: 100%;
+  padding: 5px 8px;
+  background: #2b2f34;
+  border: 1px solid #4a5057;
+  border-radius: 4px;
+  color: #f1f1f1;
+  font-size: 12px;
+  box-sizing: border-box;
+  box-shadow: none;
+}
+
+.connection-panel-input:focus {
+  outline: none;
+  border-color: #007acc;
+}
+
+.connection-panel-row {
+  display: flex;
+  gap: 6px;
+}
+
+.connection-panel-row button {
+  flex: 1;
+  font-size: 12px;
+  padding: 5px 6px;
+  min-width: 0;
+  white-space: nowrap;
+}
+
+/* デバイス一覧 */
+.device-list {
+  display: flex;
+  flex-direction: column;
+}
+
+.device-list-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(220px, 100%), 1fr));
+  gap: 8px;
+  align-content: start;
+}
+
+.device-item {
+  padding: 10px 12px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
+  border: 1px solid transparent;
+  min-width: 0;
+}
+
+.device-item.terminal-target {
+  border-color: #007acc;
+  background: #1a2a3a;
+}
+
+.device-item:hover {
+  background: #2a2d2e;
+}
+
+.device-item.selected {
+  background: #37373d;
+  border-color: #007acc;
+}
+
+.device-status {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 4px;
+}
+
+.status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  display: inline-block;
+}
+
+.status-text {
+  font-size: 11px;
+  color: #999;
+}
+
+.device-name {
+  font-size: 14px;
+  font-weight: 600;
+  margin-bottom: 2px;
+}
+
+.device-info {
+  display: flex;
+  gap: 8px;
+  font-size: 11px;
+  color: #777;
+  flex-wrap: wrap;
+}
+
+.device-serial {
+  overflow-wrap: anywhere;
+}
+
+.device-transport {
+  padding: 1px 6px;
+  border-radius: 999px;
+  background: #333;
+  color: #cdd3d9;
+}
+
+.device-transport.usb {
+  background: #20445f;
+  color: #9fd8ff;
+}
+
+.device-transport.wifi {
+  background: #224b2c;
+  color: #a7e7b3;
+}
+
+.device-list-loading,
+.device-list-error,
+.device-list-empty {
+  padding: 20px 12px;
+  text-align: center;
+  color: #888;
+  font-size: 13px;
+}
+
+.device-list-error {
+  color: #f44336;
+}
+
+/* メインコンテンツ */
+.main-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  min-width: 0;
+}
+
+/* デバイスヘッダー */
+.device-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  background: #202224;
+  border-bottom: 1px solid #333;
+  flex-wrap: wrap;
+}
+
+.device-header-summary {
+  min-width: 180px;
+}
+
+.device-header-title {
+  font-size: 14px;
+  font-weight: 700;
+  color: #f2f2f2;
+}
+
+.device-header-serial {
+  font-size: 11px;
+  color: #8f959d;
+  font-family: "SF Mono", "Consolas", monospace;
+}
+
+.device-status-chips {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1;
+  flex-wrap: wrap;
+}
+
+.status-chip {
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: #2b2f34;
+  color: #d7dce3;
+  font-size: 12px;
+  border: 1px solid #3a4047;
+  white-space: nowrap;
+}
+
+.device-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.wifi-action-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.device-header-input {
+  width: 170px;
+  padding: 6px 10px;
+  background: #2b2f34;
+  border: 1px solid #4a5057;
+  border-radius: 4px;
+  color: #f1f1f1;
+  font-size: 13px;
+  box-shadow: none;
+}
+
+.device-header-input:focus {
+  outline: none;
+  border-color: #007acc;
+}
+
+/* タブバー */
+.tab-bar {
+  display: flex;
+  gap: 0;
+  background: #252526;
+  border-bottom: 1px solid #333;
+  padding: 0 12px;
+}
+
+.tab-btn {
+  padding: 10px 20px;
+  background: none;
+  border: none;
+  border-bottom: 2px solid transparent;
+  color: #888;
+  cursor: pointer;
+  font-size: 13px;
+  transition: all 0.15s;
+  box-shadow: none;
+}
+
+.tab-btn:hover {
+  color: #ccc;
+  background: none;
+}
+
+.tab-btn.active {
+  color: #fff;
+  border-bottom-color: #007acc;
+  background: none;
+}
+
+.sidebar-footer {
+  padding: 8px 12px;
+  border-top: 1px solid #333;
+  display: flex;
+  justify-content: flex-end;
+}
+
+.lang-btn {
+  padding: 4px 10px;
+  font-size: 11px;
+  font-weight: 600;
+  background: none;
+  border: 1px solid #555;
+  border-radius: 3px;
+  color: #888;
+  cursor: pointer;
+  box-shadow: none;
+}
+
+.lang-btn:hover {
+  color: #ccc;
+  border-color: #888;
+  background: none;
+}
+
+/* タブコンテンツ */
+.tab-content {
+  flex: 1;
+  overflow-y: auto;
+  padding: 16px;
+}
+
+.tab-placeholder {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 200px;
+  color: #666;
+  font-size: 14px;
+}
+
+@media (max-width: 900px) {
+  .app-layout {
+    flex-direction: column;
+  }
+
+  .sidebar {
+    width: 100% !important;
+    max-width: none;
+    min-width: 0;
+    height: 38vh;
+    border-right: none;
+    border-bottom: 1px solid #333;
+  }
+
+  .sidebar-resizer {
+    display: none;
+  }
+}
+
+/* ツールバー共通 */
+.packages-toolbar,
+.media-toolbar,
+.logs-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 12px;
+  flex-wrap: wrap;
+}
+
+.logs-toolbar h3 {
+  margin: 0;
+  font-size: 14px;
+  flex: 1;
+}
+
+/* 検索 */
+.search-input {
+  padding: 6px 10px;
+  background: #3c3c3c;
+  border: 1px solid #555;
+  border-radius: 4px;
+  color: #e0e0e0;
+  font-size: 13px;
+  flex: 1;
+  min-width: 120px;
+  box-shadow: none;
+}
+
+.search-input:focus {
+  outline: none;
+  border-color: #007acc;
+}
+
+/* ボタン共通 */
+button {
+  padding: 6px 14px;
+  background: #0e639c;
+  border: none;
+  border-radius: 4px;
+  color: #fff;
+  cursor: pointer;
+  font-size: 13px;
+  transition: background 0.15s;
+  box-shadow: none;
+}
+
+button:hover:not(:disabled) {
+  background: #1177bb;
+}
+
+button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.btn-secondary {
+  background: #3b4046;
+}
+
+.btn-secondary:hover:not(:disabled) {
+  background: #4a525b;
+}
+
+.btn-small {
+  padding: 4px 10px;
+  font-size: 12px;
+}
+
+.btn-icon {
+  padding: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: none;
+  border: 1px solid #4a5057;
+  border-radius: 4px;
+  color: #c0c8d0;
+}
+
+.btn-icon:hover:not(:disabled) {
+  background: #2b2f34;
+  color: #fff;
+  border-color: #6a7480;
+}
+
+.btn-run {
+  background: #388e3c;
+}
+
+.btn-run:hover:not(:disabled) {
+  background: #43a047;
+}
+
+.btn-danger {
+  background: #c62828;
+}
+
+.btn-danger:hover:not(:disabled) {
+  background: #e53935;
+}
+
+/* チェックボックス */
+.checkbox-label {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 13px;
+  color: #ccc;
+  white-space: nowrap;
+}
+
+/* パッケージ一覧 */
+.package-list {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.package-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 12px;
+  background: #2a2a2a;
+  border-radius: 4px;
+  transition: background 0.1s;
+}
+
+.package-item:hover {
+  background: #333;
+}
+
+.package-name {
+  font-size: 13px;
+  font-family: monospace;
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.package-actions {
+  display: flex;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+/* フィルタボタン */
+.filter-group {
+  display: flex;
+  gap: 0;
+}
+
+.filter-btn {
+  background: #3c3c3c;
+  border-radius: 0;
+  border: 1px solid #555;
+}
+
+.filter-btn:first-child {
+  border-radius: 4px 0 0 4px;
+}
+
+.filter-btn:last-child {
+  border-radius: 0 4px 4px 0;
+}
+
+.filter-btn.active {
+  background: #0e639c;
+  border-color: #0e639c;
+}
+
+/* メディア一覧 */
+.media-list {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.media-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 12px;
+  background: #2a2a2a;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background 0.1s;
+}
+
+.media-item:hover {
+  background: #333;
+}
+
+.media-item.selected {
+  background: #1a3a5c;
+}
+
+.media-kind {
+  font-size: 11px;
+  padding: 2px 6px;
+  border-radius: 3px;
+  font-weight: 600;
+  flex-shrink: 0;
+}
+
+.media-kind.photo {
+  background: #1b5e20;
+  color: #a5d6a7;
+}
+
+.media-kind.video {
+  background: #4a148c;
+  color: #ce93d8;
+}
+
+.media-name {
+  font-size: 13px;
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.media-path {
+  font-size: 11px;
+  color: #666;
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  text-align: right;
+}
+
+/* 進捗バー */
+.progress-bar {
+  margin-bottom: 12px;
+}
+
+.progress-info {
+  font-size: 12px;
+  color: #aaa;
+  margin-bottom: 4px;
+}
+
+.progress-track {
+  height: 4px;
+  background: #3c3c3c;
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.progress-fill {
+  height: 100%;
+  background: #007acc;
+  transition: width 0.3s ease;
+}
+
+/* ログ一覧 */
+.log-list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.log-item {
+  padding: 8px 12px;
+  background: #2a2a2a;
+  border-radius: 4px;
+  border-left: 3px solid #555;
+}
+
+.log-item.success {
+  border-left-color: #4caf50;
+}
+
+.log-item.failure {
+  border-left-color: #f44336;
+}
+
+.log-header {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  margin-bottom: 4px;
+  font-size: 12px;
+}
+
+.log-status {
+  font-weight: 600;
+  padding: 1px 6px;
+  border-radius: 3px;
+  font-size: 11px;
+}
+
+.log-status.success {
+  background: #1b5e20;
+  color: #a5d6a7;
+}
+
+.log-status.failure {
+  background: #b71c1c;
+  color: #ef9a9a;
+}
+
+.log-type {
+  color: #aaa;
+  font-family: monospace;
+}
+
+.log-serial {
+  color: #777;
+  font-family: monospace;
+}
+
+.log-time {
+  color: #666;
+  margin-left: auto;
+}
+
+.log-detail {
+  font-size: 13px;
+  color: #ccc;
+  word-break: break-all;
+}
+
+.logs-tab,
+.logcat-tab {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-height: 0;
+}
+
+.logs-header,
+.logcat-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.logs-header span {
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.logs-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.empty-message {
+  color: #8f959d;
+  font-size: 13px;
+}
+
+.logcat-output {
+  flex: 1;
+  min-height: 360px;
+  overflow: auto;
+  background: #151719;
+  border: 1px solid #2f3439;
+  border-radius: 6px;
+  padding: 10px 12px;
+  font-size: 12px;
+  line-height: 1.6;
+  font-family: "SF Mono", "Consolas", "Menlo", monospace;
+}
+
+.logcat-line {
+  white-space: pre-wrap;
+  word-break: break-all;
+  color: #d7dce3;
+}
+
+.logcat-line.level-w {
+  color: #ffd37a;
+}
+
+.logcat-line.level-e,
+.logcat-line.level-f {
+  color: #ff9d93;
+}
+
+.logcat-line.level-i {
+  color: #9fd8ff;
+}
+
+/* ローディング・エラー */
+.loading {
+  padding: 20px;
+  text-align: center;
+  color: #888;
+}
+
+.error {
+  padding: 12px;
+  background: #3c1111;
+  border-radius: 4px;
+  color: #ef9a9a;
+  font-size: 13px;
+}
+
+/* タブバー右端ターミナルボタン */
+.tab-bar-spacer {
+  flex: 1;
+}
+
+.tab-bar-terminal-btn {
+  padding: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: none;
+  border: 1px solid transparent;
+  border-radius: 4px;
+  color: #888;
+  cursor: pointer;
+  transition: color 0.15s, background 0.15s, border-color 0.15s;
+  align-self: center;
+}
+
+.tab-bar-terminal-btn:hover:not(:disabled) {
+  background: #2b2f34;
+  color: #fff;
+  border-color: #6a7480;
+}
+
+.tab-bar-terminal-btn:disabled {
+  opacity: 0.35;
+  cursor: default;
+}
+
+/* シェルダイアログ */
+.shell-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.6);
+  z-index: 1000;
+  display: flex;
+  align-items: flex-end;
+  justify-content: stretch;
+}
+
+.shell-dialog {
+  width: 100%;
+  height: 40vh;
+  min-height: 240px;
+  background: #1a1a1a;
+  border-top: 1px solid #007acc;
+  display: flex;
+  flex-direction: column;
+  font-family: "SF Mono", "Consolas", "Menlo", monospace;
+}
+
+.shell-titlebar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 12px;
+  background: #252526;
+  border-bottom: 1px solid #333;
+  flex-shrink: 0;
+}
+
+.shell-title {
+  font-size: 12px;
+  color: #ccc;
+  font-weight: 600;
+}
+
+.shell-device {
+  font-size: 11px;
+  color: #007acc;
+  font-family: monospace;
+  flex: 1;
+}
+
+.shell-close-btn {
+  padding: 2px 8px;
+  background: none;
+  border: none;
+  color: #666;
+  cursor: pointer;
+  font-size: 13px;
+}
+
+.shell-close-btn:hover {
+  color: #ccc;
+  background: none;
+}
+
+.shell-output {
+  flex: 1;
+  overflow-y: auto;
+  padding: 8px 12px;
+  font-size: 12px;
+  line-height: 1.6;
+}
+
+.shell-hint {
+  color: #555;
+  font-size: 12px;
+  line-height: 1.8;
+}
+
+.shell-hint code {
+  color: #888;
+  background: #2a2a2a;
+  padding: 1px 4px;
+  border-radius: 3px;
+}
+
+.shell-line {
+  white-space: pre-wrap;
+  word-break: break-all;
+}
+
+.shell-line-command {
+  color: #569cd6;
+  margin-top: 4px;
+}
+
+.shell-line-stdout {
+  color: #d4d4d4;
+}
+
+.shell-line-error {
+  color: #f48771;
+}
+
+.shell-line-info {
+  color: #666;
+  font-style: italic;
+}
+
+.shell-input-row {
+  display: flex;
+  align-items: center;
+  padding: 6px 12px;
+  border-top: 1px solid #2a2a2a;
+  flex-shrink: 0;
+  background: #1a1a1a;
+}
+
+.shell-prompt {
+  font-size: 12px;
+  color: #4ec9b0;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.shell-input {
+  flex: 1;
+  background: none;
+  border: none;
+  outline: none;
+  color: #e0e0e0;
+  font-size: 12px;
+  font-family: inherit;
+  caret-color: #e0e0e0;
+  padding: 0;
+  box-shadow: none;
+}
+
+.shell-input:disabled {
+  opacity: 0.5;
+}
+
+/* グローバルリセット */
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  background: #1e1e1e;
+  overflow: hidden;
+}
+
+/* アップデートバナー */
+.update-banner {
+  position: fixed;
+  bottom: 16px;
+  right: 16px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: #2d2d2d;
+  border: 1px solid #0078d4;
+  border-radius: 6px;
+  padding: 10px 14px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.5);
+  z-index: 9999;
+  max-width: 380px;
+}
+
+.update-banner-text {
+  font-size: 13px;
+  color: #e0e0e0;
+  flex: 1;
+}
+
+.update-banner-btn {
+  padding: 4px 12px;
+  border-radius: 4px;
+  border: 1px solid #555;
+  background: #3c3c3c;
+  color: #e0e0e0;
+  font-size: 12px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.update-banner-btn:hover {
+  background: #4a4a4a;
+}
+
+.update-banner-btn.primary {
+  background: #0078d4;
+  border-color: #0078d4;
+  color: #fff;
+}
+
+.update-banner-btn.primary:hover {
+  background: #106ebe;
+}
+
+.update-progress-bar {
+  width: 120px;
+  height: 4px;
+  background: #555;
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.update-progress-fill {
+  height: 100%;
+  background: #0078d4;
+  transition: width 0.2s;
+}

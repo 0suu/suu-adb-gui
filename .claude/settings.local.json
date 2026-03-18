@@ -1,0 +1,14 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(cargo --version)",
+      "Bash(npm --version)",
+      "Bash(source ~/.zshrc)",
+      "Bash(rustc --version)",
+      "Bash(npm install:*)",
+      "Bash(source \"$HOME/.cargo/env\")",
+      "Bash(cargo check:*)",
+      "Bash(export PATH=\"$HOME/.cargo/bin:$PATH\")"
+    ]
+  }
+}
