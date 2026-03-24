@@ -137,4 +137,4 @@ npx tauri build
 
 ## ライセンス
 
-MIT
+ISC
