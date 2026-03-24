@@ -1,5 +1,8 @@
 # ADB GUI Tool
 
+<img width="1277" height="795" alt="image" src="https://github.com/user-attachments/assets/0e3c4e59-8404-4f98-87c2-a4d82f54b08c" />
+
+
 macOS / Windows で動作する ADB (Android Debug Bridge) の GUI ツール。
 
 USB または WiFi で接続した Android 端末に対して、APK インストール・アプリ管理・写真や動画の取り出し・logcat 閲覧などをワンクリックで行えます。
