@@ -54,7 +54,7 @@ export function DeviceList() {
   }, [data, selectedSerial, setDevices, selectDevice]);
 
   const handleClick = (e: React.MouseEvent, serial: string) => {
-    if (e.ctrlKey && selectedSerial) {
+    if ((e.ctrlKey || e.metaKey) && selectedSerial) {
       toggleTerminalSerial(serial);
     } else {
       selectDevice(serial);
