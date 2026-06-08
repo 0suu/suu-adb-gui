@@ -8,6 +8,7 @@ type DeviceStore = {
   setDevices: (devices: DeviceSummary[]) => void;
   selectDevice: (serial: string | null) => void;
   toggleTerminalSerial: (serial: string) => void;
+  setTerminalSerials: (serials: string[]) => void;
 };
 
 export const useDeviceStore = create<DeviceStore>((set) => ({
@@ -40,4 +41,6 @@ export const useDeviceStore = create<DeviceStore>((set) => ({
           : [...state.terminalSerials, serial],
       };
     }),
+  // Shift+クリック: 範囲選択で terminal 対象を一括セット
+  setTerminalSerials: (serials) => set({ terminalSerials: serials }),
 }));

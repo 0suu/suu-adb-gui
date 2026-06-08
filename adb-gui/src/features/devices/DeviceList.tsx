@@ -14,9 +14,10 @@ const stateColor: Record<string, string> = {
 
 export function DeviceList() {
   const t = useT();
-  const { devices, setDevices, selectedSerial, selectDevice, terminalSerials, toggleTerminalSerial } =
+  const { devices, setDevices, selectedSerial, selectDevice, terminalSerials, toggleTerminalSerial, setTerminalSerials } =
     useDeviceStore();
   const missingSelectionCountRef = useRef(0);
+  const offlineSinceRef = useRef<Map<string, number>>(new Map());
 
   const stateLabel: Record<string, string> = {
     device: t.stateDevice,
@@ -29,13 +30,32 @@ export function DeviceList() {
     queryKey: ["devices"],
     queryFn: listDevices,
     refetchInterval: 3000,
+    structuralSharing: false,
   });
 
   useEffect(() => {
     if (data) {
-      setDevices(data);
+      const now = Date.now();
+      const currentSerials = new Set(data.map((d) => d.serial));
+      for (const serial of offlineSinceRef.current.keys()) {
+        if (!currentSerials.has(serial)) {
+          offlineSinceRef.current.delete(serial);
+        }
+      }
+      const filtered = data.filter((d) => {
+        if (d.state === "offline") {
+          if (!offlineSinceRef.current.has(d.serial)) {
+            offlineSinceRef.current.set(d.serial, now);
+          }
+          return now - offlineSinceRef.current.get(d.serial)! < 5000;
+        } else {
+          offlineSinceRef.current.delete(d.serial);
+          return true;
+        }
+      });
+      setDevices(filtered);
       if (selectedSerial) {
-        if (data.some((d) => d.serial === selectedSerial)) {
+        if (filtered.some((d) => d.serial === selectedSerial)) {
           missingSelectionCountRef.current = 0;
         } else {
           missingSelectionCountRef.current += 1;
@@ -47,14 +67,23 @@ export function DeviceList() {
       } else {
         missingSelectionCountRef.current = 0;
       }
-      if (!selectedSerial && data.length === 1) {
-        selectDevice(data[0].serial);
+      if (!selectedSerial && filtered.length === 1) {
+        selectDevice(filtered[0].serial);
       }
     }
   }, [data, selectedSerial, setDevices, selectDevice]);
 
   const handleClick = (e: React.MouseEvent, serial: string) => {
-    if ((e.ctrlKey || e.metaKey) && selectedSerial) {
+    if (e.shiftKey && selectedSerial) {
+      const anchorIdx = devices.findIndex((d) => d.serial === selectedSerial);
+      const clickedIdx = devices.findIndex((d) => d.serial === serial);
+      if (anchorIdx !== -1 && clickedIdx !== -1) {
+        const [start, end] = anchorIdx <= clickedIdx
+          ? [anchorIdx, clickedIdx]
+          : [clickedIdx, anchorIdx];
+        setTerminalSerials(devices.slice(start, end + 1).map((d) => d.serial));
+      }
+    } else if ((e.ctrlKey || e.metaKey) && selectedSerial) {
       toggleTerminalSerial(serial);
     } else {
       selectDevice(serial);
