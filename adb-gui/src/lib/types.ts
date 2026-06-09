@@ -22,6 +22,13 @@ export type DeviceStatus = {
   storageTotalBytes?: number;
 };
 
+export type DeviceNameMapping = {
+  displayName: string;
+  uuid: string;
+};
+
+export type DeviceDisplayNameMap = Record<string, string>;
+
 export type WifiConnectResult = {
   success: boolean;
   rawOutput: string;

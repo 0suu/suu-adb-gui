@@ -132,6 +132,32 @@
   flex-direction: column;
 }
 
+.device-list-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.device-list-header h3 {
+  flex: 1;
+  margin-bottom: 0;
+}
+
+.device-name-csv-button {
+  flex: 0 0 auto;
+  padding: 4px 8px;
+  font-size: 11px;
+  white-space: nowrap;
+}
+
+.device-name-csv-status {
+  margin: -2px 0 8px;
+  font-size: 11px;
+  color: #9aa4ad;
+  overflow-wrap: anywhere;
+}
+
 .device-list-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(min(220px, 100%), 1fr));

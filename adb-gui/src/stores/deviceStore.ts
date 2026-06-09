@@ -1,20 +1,23 @@
 import { create } from "zustand";
-import type { DeviceSummary } from "../lib/types";
+import type { DeviceDisplayNameMap, DeviceSummary } from "../lib/types";
 
 type DeviceStore = {
   devices: DeviceSummary[];
   selectedSerial: string | null;
   terminalSerials: string[];
+  displayNames: DeviceDisplayNameMap;
   setDevices: (devices: DeviceSummary[]) => void;
   selectDevice: (serial: string | null) => void;
   toggleTerminalSerial: (serial: string) => void;
   setTerminalSerials: (serials: string[]) => void;
+  setDisplayNames: (displayNames: DeviceDisplayNameMap) => void;
 };
 
 export const useDeviceStore = create<DeviceStore>((set) => ({
   devices: [],
   selectedSerial: null,
   terminalSerials: [],
+  displayNames: {},
   setDevices: (devices) =>
     set((state) => ({
       devices,
@@ -43,4 +46,5 @@ export const useDeviceStore = create<DeviceStore>((set) => ({
     }),
   // Shift+クリック: 範囲選択で terminal 対象を一括セット
   setTerminalSerials: (serials) => set({ terminalSerials: serials }),
+  setDisplayNames: (displayNames) => set({ displayNames }),
 }));

@@ -2,6 +2,8 @@ import { invoke } from "@tauri-apps/api/core";
 import type {
   DeviceStatus,
   DeviceSummary,
+  DeviceDisplayNameMap,
+  DeviceNameMapping,
   PackageSummary,
   CommandResult,
   InstallApkRequest,
@@ -27,6 +29,16 @@ export const scanSubnet = (port?: number) =>
   invoke<SubnetScanResult>("scan_subnet", { port: port ?? null });
 export const captureScreenshot = (serial: string, localPath: string) =>
   invoke<ScreenshotResult>("capture_screenshot", { serial, localPath });
+export const loadDeviceNameMappings = (csvPath: string) =>
+  invoke<DeviceNameMapping[]>("load_device_name_mappings", { csvPath });
+export const resolveDeviceDisplayNames = (
+  serials: string[],
+  mappings: DeviceNameMapping[]
+) =>
+  invoke<DeviceDisplayNameMap>("resolve_device_display_names", {
+    serials,
+    mappings,
+  });
 
 // パッケージ
 export const getPackages = (serial: string) =>

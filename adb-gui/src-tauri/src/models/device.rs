@@ -1,4 +1,5 @@
 use serde::{Deserialize, Serialize};
+use std::collections::HashMap;
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 #[serde(rename_all = "lowercase")]
@@ -66,6 +67,15 @@ pub struct WifiConnectResult {
 pub struct ScreenshotResult {
     pub saved_path: String,
 }
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct DeviceNameMapping {
+    pub display_name: String,
+    pub uuid: String,
+}
+
+pub type DeviceDisplayNameMap = HashMap<String, String>;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]

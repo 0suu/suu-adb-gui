@@ -20,6 +20,8 @@ pub fn run() {
             devices::disconnect_wifi_device,
             devices::scan_subnet,
             devices::capture_screenshot,
+            devices::load_device_name_mappings,
+            devices::resolve_device_display_names,
             packages::get_packages,
             packages::uninstall_package,
             packages::run_package,

@@ -1,9 +1,14 @@
 import { useQuery } from "@tanstack/react-query";
-import { useEffect, useRef } from "react";
-import { listDevices } from "../../lib/api";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { open } from "@tauri-apps/plugin-dialog";
+import {
+  listDevices,
+  loadDeviceNameMappings,
+  resolveDeviceDisplayNames,
+} from "../../lib/api";
 import { useDeviceStore } from "../../stores/deviceStore";
 import { useT } from "../../lib/i18n";
-import type { DeviceSummary } from "../../lib/types";
+import type { DeviceNameMapping, DeviceSummary } from "../../lib/types";
 
 const stateColor: Record<string, string> = {
   device: "#4caf50",
@@ -14,8 +19,20 @@ const stateColor: Record<string, string> = {
 
 export function DeviceList() {
   const t = useT();
-  const { devices, setDevices, selectedSerial, selectDevice, terminalSerials, toggleTerminalSerial, setTerminalSerials } =
-    useDeviceStore();
+  const {
+    devices,
+    setDevices,
+    selectedSerial,
+    selectDevice,
+    terminalSerials,
+    toggleTerminalSerial,
+    setTerminalSerials,
+    displayNames,
+    setDisplayNames,
+  } = useDeviceStore();
+  const [nameMappings, setNameMappings] = useState<DeviceNameMapping[]>([]);
+  const [csvStatus, setCsvStatus] = useState<string | null>(null);
+  const [loadingCsv, setLoadingCsv] = useState(false);
   const missingSelectionCountRef = useRef(0);
   const offlineSinceRef = useRef<Map<string, number>>(new Map());
 
@@ -32,6 +49,39 @@ export function DeviceList() {
     refetchInterval: 3000,
     structuralSharing: false,
   });
+
+  const connectedSerials = useMemo(
+    () =>
+      devices
+        .filter((device) => device.state === "device")
+        .map((device) => device.serial),
+    [devices]
+  );
+  const serialKey = connectedSerials.join("\n");
+  const mappingKey = useMemo(
+    () =>
+      nameMappings
+        .map((mapping) => `${mapping.uuid}\t${mapping.displayName}`)
+        .join("\n"),
+    [nameMappings]
+  );
+
+  const { data: resolvedDisplayNames, isFetching: matchingDeviceNames } =
+    useQuery({
+      queryKey: ["device-display-names", serialKey, mappingKey],
+      queryFn: () => resolveDeviceDisplayNames(connectedSerials, nameMappings),
+      enabled: connectedSerials.length > 0 && nameMappings.length > 0,
+      staleTime: 60000,
+      refetchOnWindowFocus: false,
+    });
+
+  useEffect(() => {
+    if (resolvedDisplayNames) {
+      setDisplayNames(resolvedDisplayNames);
+    } else if (nameMappings.length === 0) {
+      setDisplayNames({});
+    }
+  }, [nameMappings.length, resolvedDisplayNames, setDisplayNames]);
 
   useEffect(() => {
     if (data) {
@@ -90,35 +140,93 @@ export function DeviceList() {
     }
   };
 
+  const handleLoadDeviceNamesCsv = async () => {
+    const selected = await open({
+      multiple: false,
+      filters: [{ name: "CSV", extensions: ["csv"] }],
+    });
+    const csvPath = Array.isArray(selected) ? selected[0] : selected;
+    if (!csvPath) return;
+
+    setLoadingCsv(true);
+    setCsvStatus(null);
+    try {
+      const mappings = await loadDeviceNameMappings(csvPath);
+      setNameMappings(mappings);
+      setDisplayNames({});
+      setCsvStatus(t.deviceNamesCsvLoaded(mappings.length));
+    } catch (error) {
+      setCsvStatus(`${t.deviceNamesCsvLoadFailed}: ${String(error)}`);
+    } finally {
+      setLoadingCsv(false);
+    }
+  };
+
+  const deviceListHeader = (
+    <div className="device-list-header">
+      <h3>{t.deviceListTitle}</h3>
+      <button
+        className="device-name-csv-button"
+        onClick={handleLoadDeviceNamesCsv}
+        disabled={loadingCsv}
+      >
+        {loadingCsv ? t.loading : t.loadDeviceNamesCsv}
+      </button>
+    </div>
+  );
+
+  const deviceNameStatus = (csvStatus || matchingDeviceNames) && (
+    <div className="device-name-csv-status">
+      {matchingDeviceNames ? t.matchingDeviceNames : csvStatus}
+    </div>
+  );
+
   if (isLoading && devices.length === 0) {
-    return <div className="device-list-loading">{t.deviceListLoading}</div>;
+    return (
+      <div className="device-list">
+        {deviceListHeader}
+        {deviceNameStatus}
+        <div className="device-list-loading">{t.deviceListLoading}</div>
+      </div>
+    );
   }
 
   if (error) {
     return (
-      <div className="device-list-error">
-        <p>{t.deviceListError}</p>
-        <small>{String(error)}</small>
+      <div className="device-list">
+        {deviceListHeader}
+        {deviceNameStatus}
+        <div className="device-list-error">
+          <p>{t.deviceListError}</p>
+          <small>{String(error)}</small>
+        </div>
       </div>
     );
   }
 
   if (devices.length === 0) {
     return (
-      <div className="device-list-empty">
-        <p>{t.deviceListEmpty}</p>
-        <small>{t.deviceListEmptyHint}</small>
+      <div className="device-list">
+        {deviceListHeader}
+        {deviceNameStatus}
+        <div className="device-list-empty">
+          <p>{t.deviceListEmpty}</p>
+          <small>{t.deviceListEmptyHint}</small>
+        </div>
       </div>
     );
   }
 
   return (
     <div className="device-list">
-      <h3>{t.deviceListTitle}</h3>
+      {deviceListHeader}
+      {deviceNameStatus}
       <div className="device-list-grid">
         {devices.map((device: DeviceSummary) => {
           const isPrimary = selectedSerial === device.serial;
           const isTerminalTarget = terminalSerials.includes(device.serial);
+          const displayName =
+            displayNames[device.serial] || device.model || device.serial;
           const className = [
             "device-item",
             isPrimary ? "selected" : "",
@@ -141,7 +249,7 @@ export function DeviceList() {
                 <span className="status-text">{stateLabel[device.state]}</span>
               </div>
               <div className="device-name">
-                {device.model || device.serial}
+                {displayName}
               </div>
               <div className="device-info">
                 <span className="device-serial">{device.serial}</span>

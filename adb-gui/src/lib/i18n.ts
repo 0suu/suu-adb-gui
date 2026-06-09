@@ -7,6 +7,10 @@ type Translations = {
   deviceListEmpty: string;
   deviceListEmptyHint: string;
   deviceListTitle: string;
+  loadDeviceNamesCsv: string;
+  deviceNamesCsvLoaded: (count: number) => string;
+  deviceNamesCsvLoadFailed: string;
+  matchingDeviceNames: string;
   stateDevice: string;
   stateOffline: string;
   stateUnauthorized: string;
@@ -122,6 +126,10 @@ const ja: Translations = {
   deviceListEmpty: "デバイスが見つかりません",
   deviceListEmptyHint: "USB デバッグを有効にして接続してください",
   deviceListTitle: "デバイス",
+  loadDeviceNamesCsv: "CSV読込",
+  deviceNamesCsvLoaded: (count) => `${count} 件の名前を読み込みました`,
+  deviceNamesCsvLoadFailed: "CSV 読み込み失敗",
+  matchingDeviceNames: "名前照合中...",
   stateDevice: "接続中",
   stateOffline: "オフライン",
   stateUnauthorized: "未認証",
@@ -235,6 +243,10 @@ const en: Translations = {
   deviceListEmpty: "No devices found",
   deviceListEmptyHint: "Enable USB debugging and connect your device",
   deviceListTitle: "Devices",
+  loadDeviceNamesCsv: "Load CSV",
+  deviceNamesCsvLoaded: (count) => `Loaded ${count} names`,
+  deviceNamesCsvLoadFailed: "Failed to load CSV",
+  matchingDeviceNames: "Matching names...",
   stateDevice: "Connected",
   stateOffline: "Offline",
   stateUnauthorized: "Unauthorized",

@@ -21,6 +21,7 @@ export function DeviceHeader() {
   const t = useT();
   const devices = useDeviceStore((s) => s.devices);
   const serial = useDeviceStore((s) => s.selectedSerial);
+  const displayNames = useDeviceStore((s) => s.displayNames);
   const addLog = useLogStore((s) => s.addLog);
   const [screenshotBusy, setScreenshotBusy] = useState(false);
 
@@ -54,7 +55,9 @@ export function DeviceHeader() {
     <div className="device-header">
       <div className="device-header-summary">
         <div className="device-header-title">
-          {selectedDevice ? selectedDevice.model || serial : t.noDeviceSelected}
+          {selectedDevice
+            ? displayNames[selectedDevice.serial] || selectedDevice.model || serial
+            : t.noDeviceSelected}
         </div>
         <div className="device-header-serial">{serial ?? t.selectAdbDevice}</div>
       </div>

@@ -1,12 +1,13 @@
 use crate::models::device::{
-    ConnectionType, DeviceState, DeviceStatus, DeviceSummary, ScreenshotResult,
-    SubnetScanResult, WifiConnectResult,
+    ConnectionType, DeviceDisplayNameMap, DeviceNameMapping, DeviceState, DeviceStatus,
+    DeviceSummary, ScreenshotResult, SubnetScanResult, WifiConnectResult,
 };
 use crate::services::process_manager::{
     adb_path, configure_background_std_command, configure_background_tokio_command, exec_adb,
     exec_adb_for_device,
 };
 use crate::utils::error::AppError;
+use std::collections::{HashMap, HashSet};
 use std::net::{Ipv4Addr, UdpSocket};
 use std::path::Path;
 use std::process::{Command as StdCommand, Stdio};
@@ -21,6 +22,8 @@ const PROP_TIMEOUT: u64 = 3000;
 const STATUS_TIMEOUT: u64 = 5000;
 const SCREENSHOT_TIMEOUT: u64 = 15000;
 const TCPIP_PORT: u16 = 5555;
+const DISPLAY_NAME_SCAN_TIMEOUT: u64 = 20000;
+const DISPLAY_NAME_IMAGE_DIRS: &[&str] = &["/sdcard/DCIM/", "/sdcard/Pictures/"];
 
 /// `adb devices -l` を実行してデバイス一覧を取得
 pub async fn list_devices() -> Result<Vec<DeviceSummary>, AppError> {
@@ -89,8 +92,7 @@ pub async fn list_devices() -> Result<Vec<DeviceSummary>, AppError> {
 
 /// getprop を実行
 async fn get_prop(serial: &str, prop: &str) -> Result<String, AppError> {
-    let output =
-        exec_adb_for_device(serial, &["shell", "getprop", prop], PROP_TIMEOUT).await?;
+    let output = exec_adb_for_device(serial, &["shell", "getprop", prop], PROP_TIMEOUT).await?;
     Ok(output.trim().to_string())
 }
 
@@ -140,12 +142,9 @@ pub async fn get_device_status(serial: &str) -> Result<DeviceStatus, AppError> {
 
 pub async fn enable_adb_over_tcpip(serial: &str) -> Result<WifiConnectResult, AppError> {
     let port = TCPIP_PORT.to_string();
-    let tcpip_output =
-        exec_adb_for_device(serial, &["tcpip", &port], STATUS_TIMEOUT).await?;
+    let tcpip_output = exec_adb_for_device(serial, &["tcpip", &port], STATUS_TIMEOUT).await?;
     let ip_address = get_wifi_ip(serial).await.ok();
-    let connected_serial = ip_address
-        .as_ref()
-        .map(|ip| format!("{ip}:{TCPIP_PORT}"));
+    let connected_serial = ip_address.as_ref().map(|ip| format!("{ip}:{TCPIP_PORT}"));
 
     Ok(WifiConnectResult {
         success: true,
@@ -225,7 +224,9 @@ pub async fn capture_screenshot(
     });
 
     let status = match timeout(Duration::from_millis(SCREENSHOT_TIMEOUT), child.wait()).await {
-        Ok(result) => result.map_err(|e| AppError::adb_execution(format!("adb 実行エラー: {}", e)))?,
+        Ok(result) => {
+            result.map_err(|e| AppError::adb_execution(format!("adb 実行エラー: {}", e)))?
+        }
         Err(_) => {
             let _ = child.kill().await;
             let _ = child.wait().await;
@@ -258,6 +259,164 @@ pub async fn capture_screenshot(
     Ok(ScreenshotResult {
         saved_path: local_path.to_string(),
     })
+}
+
+pub fn load_device_name_mappings(csv_path: &str) -> Result<Vec<DeviceNameMapping>, AppError> {
+    let content = std::fs::read_to_string(csv_path)?;
+    let records = parse_csv_records(&content)?;
+    let mut mappings = Vec::new();
+
+    for (index, record) in records.into_iter().enumerate() {
+        if record.iter().all(|value| value.trim().is_empty()) {
+            continue;
+        }
+
+        if record.len() < 2 {
+            return Err(AppError::parse(format!(
+                "CSV {} 行目に displayName,uuid の2列がありません",
+                index + 1
+            )));
+        }
+
+        let display_name = trim_bom(record[0].trim()).to_string();
+        let uuid = record[1].trim().to_string();
+        if index == 0 && uuid.eq_ignore_ascii_case("uuid") {
+            continue;
+        }
+        if display_name.is_empty() || uuid.is_empty() {
+            continue;
+        }
+
+        mappings.push(DeviceNameMapping { display_name, uuid });
+    }
+
+    Ok(mappings)
+}
+
+pub async fn resolve_device_display_names(
+    serials: &[String],
+    mappings: &[DeviceNameMapping],
+) -> Result<DeviceDisplayNameMap, AppError> {
+    let mut display_names = HashMap::new();
+    if mappings.is_empty() {
+        return Ok(display_names);
+    }
+
+    for serial in serials {
+        if let Ok(Some(display_name)) = resolve_device_display_name(serial, mappings).await {
+            display_names.insert(serial.clone(), display_name);
+        }
+    }
+
+    Ok(display_names)
+}
+
+async fn resolve_device_display_name(
+    serial: &str,
+    mappings: &[DeviceNameMapping],
+) -> Result<Option<String>, AppError> {
+    let device_photo_names = list_device_photo_names(serial).await?;
+
+    for mapping in mappings {
+        if device_photo_names.contains(&normalize_lookup_key(&mapping.uuid)) {
+            return Ok(Some(mapping.display_name.clone()));
+        }
+    }
+
+    Ok(None)
+}
+
+async fn list_device_photo_names(serial: &str) -> Result<HashSet<String>, AppError> {
+    let mut names = HashSet::new();
+
+    for dir in DISPLAY_NAME_IMAGE_DIRS {
+        let result = exec_adb_for_device(
+            serial,
+            &["shell", "find", dir, "-type", "f"],
+            DISPLAY_NAME_SCAN_TIMEOUT,
+        )
+        .await;
+
+        let output = match result {
+            Ok(output) => output,
+            Err(_) => continue,
+        };
+
+        for line in output.lines() {
+            let path = line.trim();
+            if path.is_empty() {
+                continue;
+            }
+
+            let file_name = path.rsplit('/').next().unwrap_or(path).trim();
+            if file_name.is_empty() {
+                continue;
+            }
+
+            names.insert(normalize_lookup_key(file_name));
+            if let Some(stem) = file_name.rsplit_once('.').map(|(stem, _)| stem) {
+                if !stem.is_empty() {
+                    names.insert(normalize_lookup_key(stem));
+                }
+            }
+        }
+    }
+
+    Ok(names)
+}
+
+fn normalize_lookup_key(value: &str) -> String {
+    value.trim().to_ascii_lowercase()
+}
+
+fn trim_bom(value: &str) -> &str {
+    value.strip_prefix('\u{feff}').unwrap_or(value)
+}
+
+fn parse_csv_records(content: &str) -> Result<Vec<Vec<String>>, AppError> {
+    let mut records = Vec::new();
+    let mut record = Vec::new();
+    let mut field = String::new();
+    let mut chars = content.chars().peekable();
+    let mut in_quotes = false;
+
+    while let Some(ch) = chars.next() {
+        match ch {
+            '"' if in_quotes && chars.peek() == Some(&'"') => {
+                field.push('"');
+                chars.next();
+            }
+            '"' => {
+                in_quotes = !in_quotes;
+            }
+            ',' if !in_quotes => {
+                record.push(std::mem::take(&mut field));
+            }
+            '\n' if !in_quotes => {
+                record.push(std::mem::take(&mut field));
+                records.push(std::mem::take(&mut record));
+            }
+            '\r' if !in_quotes => {
+                if chars.peek() == Some(&'\n') {
+                    continue;
+                }
+                record.push(std::mem::take(&mut field));
+                records.push(std::mem::take(&mut record));
+            }
+            _ => field.push(ch),
+        }
+    }
+
+    if in_quotes {
+        return Err(AppError::parse("CSV のクォートが閉じていません"));
+    }
+
+    if !field.is_empty() || !record.is_empty() {
+        record.push(field);
+        records.push(record);
+    }
+
+    Ok(records)
 }
 
 pub async fn get_wifi_ip(serial: &str) -> Result<String, AppError> {
@@ -297,11 +456,7 @@ fn parse_battery_status(output: &str) -> (Option<u8>, Option<bool>, Option<f32>)
                 .ok()
                 .map(|status| matches!(status, 2 | 5));
         } else if let Some(value) = trimmed.strip_prefix("temperature:") {
-            temperature_celsius = value
-                .trim()
-                .parse::<f32>()
-                .ok()
-                .map(|temp| temp / 10.0);
+            temperature_celsius = value.trim().parse::<f32>().ok().map(|temp| temp / 10.0);
         }
     }
 
@@ -309,13 +464,10 @@ fn parse_battery_status(output: &str) -> (Option<u8>, Option<bool>, Option<f32>)
 }
 
 fn parse_storage_status(output: &str) -> (Option<u64>, Option<u64>) {
-    let line = output
-        .lines()
-        .rev()
-        .find(|line| {
-            let trimmed = line.trim();
-            !trimmed.is_empty() && !trimmed.starts_with("Filesystem")
-        });
+    let line = output.lines().rev().find(|line| {
+        let trimmed = line.trim();
+        !trimmed.is_empty() && !trimmed.starts_with("Filesystem")
+    });
 
     let Some(line) = line else {
         return (None, None);
